@@ -8,7 +8,7 @@ edition = "2018"
 
 [dependencies]
 crossterm = "0.18.2"
-winapi = { version = "0.3.9", features = ["winuser", "tlhelp32", "processthreadsapi", "securitybaseapi", "handleapi", "winbase", "winnt"] }
+winapi = { version = "0.3.9", features = ["winuser", "tlhelp32", "processthreadsapi", "securitybaseapi", "handleapi", "winbase", "winnt", "psapi"] }
 sysinfo = "0.15.3"
 libc = "0.2.66"
 systemstat = "0.1.6"

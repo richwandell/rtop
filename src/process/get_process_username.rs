@@ -1,31 +1,32 @@
-use winapi::um::processthreadsapi::{OpenProcess, OpenProcessToken};
-use winapi::um::winnt::{STANDARD_RIGHTS_READ, PSECURITY_INFORMATION, PSECURITY_DESCRIPTOR, PHANDLE, TOKEN_READ, PTOKEN_USER, HANDLE, TokenUser, LPSTR, PSID_NAME_USE, PROCESS_ALL_ACCESS};
+use winapi::um::processthreadsapi::{OpenProcess, OpenProcessToken, GetCurrentProcess};
+use winapi::um::winnt::{STANDARD_RIGHTS_READ, PSECURITY_INFORMATION, PSECURITY_DESCRIPTOR, PHANDLE, TOKEN_READ, PTOKEN_USER, HANDLE, TokenUser, LPSTR, PSID_NAME_USE, PROCESS_ALL_ACCESS, PROCESS_QUERY_INFORMATION};
 use winapi::shared::minwindef::{LPDWORD, DWORD, MAX_PATH};
 use winapi::um::errhandlingapi::GetLastError;
 use winapi::shared::winerror::{ERROR_NOACCESS, ERROR_INSUFFICIENT_BUFFER};
 use winapi::ctypes::c_void;
 use winapi::um::securitybaseapi::GetTokenInformation;
 use winapi::shared::lmcons::UNLEN;
-use winapi::_core::ptr::null;
+use winapi::_core::ptr::{null, null_mut};
 use winapi::um::winbase::LookupAccountSidA;
 use winapi::um::winuser::GetUserObjectSecurity;
 use winapi::um::tlhelp32::PROCESSENTRY32;
+use winapi::um::handleapi::CloseHandle;
 
 pub unsafe fn get_process_username(process_entry: &PROCESSENTRY32, handle: *mut c_void) {
-
     // let mut sec_info = std::mem::zeroed::<PSECURITY_INFORMATION>();
     // let mut length = 0 as LPDWORD;
     // GetUserObjectSecurity(handle, sec_info, 0 as PSECURITY_DESCRIPTOR, 0 as DWORD, length);
 
-    let mut process_token_handle = 0 as PHANDLE;
+    let mut process_token_handle: PHANDLE = null_mut();
     if OpenProcessToken(handle, TOKEN_READ, process_token_handle) == 0 {
-        if GetLastError() == ERROR_NOACCESS {
-            println!("{}", "no access");
-        } else {
-            println!("{}", "some other error");
-        }
+        // let last_error = GetLastError();
+        // if last_error == ERROR_NOACCESS {
+        //     println!("{}", "no access");
+        // } else {
+        //     println!("{}", "some other error");
+        // }
     } else {
-        println!("{}", "no error");
+        // println!("{}", "no error");
         let mut token_user = libc::malloc(std::mem::size_of::<PTOKEN_USER>()) as *mut c_void;
         let size = std::mem::size_of::<PTOKEN_USER>() as u32;
         let mut ret_size = size;

@@ -1,5 +1,6 @@
 mod process;
 mod utils;
+mod system;
 
 use std::io::{stdout, Write};
 use crossterm::QueueableCommand;
@@ -12,6 +13,10 @@ use std::time::Duration;
 use crate::process::get_process_list::get_process_list;
 use winapi::um::winbase::GetComputerNameA;
 use winapi::um::memoryapi::MapViewOfFile;
+use systemstat::{System, Platform};
+use crate::system::get_system_stats::get_system_stats;
+use crate::system::get_cpu_load_aggregate::get_cpu_load_aggregate;
+
 
 fn get_cpu_perc() -> f64 {
     return 0.4;
@@ -23,6 +28,7 @@ fn main() {
     let mut term_height: usize = 100;
 
     let host = gethostname::gethostname();
+
 
     loop {
         out.queue(Clear(ClearType::All));
@@ -47,11 +53,11 @@ fn main() {
         out.queue(Print("CPU".cyan()));
         out.queue(Print("[".white()));
 
-        let cpu = get_cpu_perc();
-        let bars = make_bars(cpu);
+        let cpu = get_cpu_load_aggregate();
+        let bars = make_bars(cpu.user as f64);
         out.queue(Print(bars.green()));
         out.queue(MoveTo(26, 2));
-        out.queue(Print(format!("{:.1}%", cpu * 100 as f64).grey()));
+        out.queue(Print(left_pad(format!("{:.1}%", cpu.user * 100 as f32), 5).grey()));
         out.queue(Print("]".white()));
         out.queue(MoveTo(35, 2));
         out.queue(Print("Tasks: ".cyan()));
@@ -68,8 +74,8 @@ fn main() {
             out.queue(Print(
                 format!(
                     "{} {} {}",
-                    left_pad(proc.pid.to_string(), 10),
-                    left_pad(" ".to_string(), 10),
+                    left_pad(proc.pid.to_string(), 9),
+                    left_pad(proc.user.to_string(), 9),
                     right_pad(proc.name, 20)
                 ).white()));
             if i > term_height as u16 {
