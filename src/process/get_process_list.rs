@@ -4,11 +4,14 @@ use crate::process::process::Process;
 use crate::process::get_process_mem::get_process_mem;
 use crate::process::get_process_name::get_process_name;
 use crate::process::get_process_username::get_process_username;
-use winapi::um::winnt::PROCESS_ALL_ACCESS;
+use winapi::um::winnt::{PROCESS_ALL_ACCESS, PROCESS_QUERY_LIMITED_INFORMATION};
 use winapi::um::processthreadsapi::OpenProcess;
+use sysinfo::{ProcessExt, System, SystemExt};
+use std::collections::HashMap;
+use sysinfo::Process as SIProcess;
 
+pub fn get_process_list(sys_proc_info: &HashMap<usize, SIProcess>) -> Vec<Process> {
 
-pub fn get_process_list() -> Vec<Process> {
     let mut processes = vec![];
 
     unsafe {
@@ -26,14 +29,19 @@ pub fn get_process_list() -> Vec<Process> {
                 }
                 let name = get_process_name(&pe32);
                 let pid = DWORD::from(pe32.th32ProcessID.clone());
-                let handle = OpenProcess(PROCESS_ALL_ACCESS, 0, pid);
-                let proc_mem_cnt = get_process_mem(&pe32, handle);
+                let process_handle = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, 1, pid.clone());
+                get_process_username(&pe32, process_handle);
+                let proc_mem_cnt = get_process_mem(&pe32, process_handle);
 
-                get_process_username(&pe32, handle);
+                let mut cpu_usage = 0.0;
+                if let Some(process) = sys_proc_info.get(&(pid as usize)) {
+                    cpu_usage = process.cpu_usage();
+                }
+
                 processes.push(Process {
                     handle: handle,
                     name,
-                    pid: pe32.th32ProcessID,
+                    pid: pe32.th32ProcessID.clone(),
                     user: "SYSTEM".to_string(),
                     gid: 0,
                     parent_pid: pe32.th32ParentProcessID,
@@ -48,6 +56,7 @@ pub fn get_process_list() -> Vec<Process> {
                     quota_non_paged_pool_usage: proc_mem_cnt.QuotaNonPagedPoolUsage as u32,
                     page_file_usage: proc_mem_cnt.PagefileUsage as u32,
                     peak_page_file_usage: proc_mem_cnt.PeakPagefileUsage as u32,
+                    cpu_usage: cpu_usage
                 });
             }
         }

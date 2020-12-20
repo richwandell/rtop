@@ -8,9 +8,10 @@ edition = "2018"
 
 [dependencies]
 crossterm = "0.18.2"
-winapi = { version = "0.3.9", features = ["winuser", "tlhelp32", "processthreadsapi", "securitybaseapi", "handleapi", "winbase", "winnt", "psapi"] }
+winapi = { version = "0.3.9", features = ["minwindef", "winuser", "tlhelp32", "processthreadsapi", "securitybaseapi", "handleapi", "winbase", "winnt", "psapi", "winreg"] }
 sysinfo = "0.15.3"
 libc = "0.2.66"
 systemstat = "0.1.6"
 gethostname = "0.2.1"
 term_size = "0.3.2"
+winreg = "0.8.0"

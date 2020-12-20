@@ -17,5 +17,6 @@ pub struct Process {
     pub quota_peak_non_paged_pool_usage: u32,
     pub quota_non_paged_pool_usage: u32,
     pub page_file_usage: u32,
-    pub peak_page_file_usage: u32
+    pub peak_page_file_usage: u32,
+    pub cpu_usage: f32
 }

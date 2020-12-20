@@ -33,5 +33,10 @@ pub fn make_bars(perc: f64) -> String {
     for _ in 0..num_bars {
         bars += "|";
     }
+    if bars.len() < 25 {
+        for _ in 0..25-bars.len() {
+            bars += " ";
+        }
+    }
     return bars.to_string();
 }
