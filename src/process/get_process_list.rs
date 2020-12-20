@@ -1,7 +1,12 @@
 use winapi::um::tlhelp32::{CreateToolhelp32Snapshot, TH32CS_SNAPALL, PROCESSENTRY32, Process32First, Process32Next};
 use winapi::shared::minwindef::DWORD;
 use crate::process::process::Process;
-use crate::process::gather_process_info::gather_process_info;
+use crate::process::get_process_mem::get_process_mem;
+use crate::process::get_process_name::get_process_name;
+use crate::process::get_process_username::get_process_username;
+use winapi::um::winnt::PROCESS_ALL_ACCESS;
+use winapi::um::processthreadsapi::OpenProcess;
+
 
 pub fn get_process_list() -> Vec<Process> {
     let mut processes = vec![];
@@ -16,9 +21,34 @@ pub fn get_process_list() -> Vec<Process> {
             if Process32Next(handle, &mut pe32) == 0 {
                 break;
             } else {
-                let process = gather_process_info(&pe32);
+                if pe32.th32ProcessID == 0 {
+                    continue;
+                }
+                let name = get_process_name(&pe32);
+                let pid = DWORD::from(pe32.th32ProcessID.clone());
+                let handle = OpenProcess(PROCESS_ALL_ACCESS, 0, pid);
+                let proc_mem_cnt = get_process_mem(&pe32, handle);
 
-                processes.push(process);
+                get_process_username(&pe32, handle);
+                processes.push(Process {
+                    handle: handle,
+                    name,
+                    pid: pe32.th32ProcessID,
+                    user: "SYSTEM".to_string(),
+                    gid: 0,
+                    parent_pid: pe32.th32ParentProcessID,
+                    thread_count: pe32.cntThreads,
+                    base_priority: pe32.pcPriClassBase as u32,
+                    page_fault_count: proc_mem_cnt.PageFaultCount as u32,
+                    peak_working_set_size: proc_mem_cnt.PeakWorkingSetSize as u32,
+                    working_set_size: proc_mem_cnt.WorkingSetSize as u32,
+                    quota_peak_paged_pool_usage: proc_mem_cnt.QuotaPeakPagedPoolUsage as u32,
+                    quota_paged_pool_usage: proc_mem_cnt.QuotaPagedPoolUsage as u32,
+                    quota_peak_non_paged_pool_usage: proc_mem_cnt.QuotaPeakNonPagedPoolUsage as u32,
+                    quota_non_paged_pool_usage: proc_mem_cnt.QuotaNonPagedPoolUsage as u32,
+                    page_file_usage: proc_mem_cnt.PagefileUsage as u32,
+                    peak_page_file_usage: proc_mem_cnt.PeakPagefileUsage as u32,
+                });
             }
         }
     };
