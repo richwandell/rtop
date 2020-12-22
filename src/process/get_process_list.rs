@@ -3,7 +3,7 @@ use winapi::shared::minwindef::DWORD;
 use crate::process::process::Process;
 use crate::process::get_process_mem::get_process_mem;
 use crate::process::get_process_name::get_process_name;
-use crate::process::get_process_username::get_process_username;
+use crate::process::get_process_username::get_process_username_and_domain_name;
 use winapi::um::winnt::{PROCESS_ALL_ACCESS, PROCESS_QUERY_LIMITED_INFORMATION};
 use winapi::um::processthreadsapi::OpenProcess;
 use sysinfo::{ProcessExt, System, SystemExt};
@@ -29,8 +29,8 @@ pub fn get_process_list(sys_proc_info: &HashMap<usize, SIProcess>) -> Vec<Proces
                 }
                 let name = get_process_name(&pe32);
                 let pid = DWORD::from(pe32.th32ProcessID.clone());
-                let process_handle = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, 1, pid.clone());
-                get_process_username(&pe32, process_handle);
+                let process_handle = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, 0, pid.clone());
+                let u_and_d = get_process_username_and_domain_name(&pe32, process_handle);
                 let proc_mem_cnt = get_process_mem(&pe32, process_handle);
 
                 let mut cpu_usage = 0.0;
@@ -42,7 +42,7 @@ pub fn get_process_list(sys_proc_info: &HashMap<usize, SIProcess>) -> Vec<Proces
                     handle: handle,
                     name,
                     pid: pe32.th32ProcessID.clone(),
-                    user: "SYSTEM".to_string(),
+                    user: u_and_d.0,
                     gid: 0,
                     parent_pid: pe32.th32ParentProcessID,
                     thread_count: pe32.cntThreads,
